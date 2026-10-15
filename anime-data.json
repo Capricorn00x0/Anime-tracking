@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": 1792096129557,
+    "dateAdded": 1792096129557,
+    "title": "Naruto",
+    "image": "https://i.pinimg.com/1200x/9f/3a/8d/9f3a8dfe802f2054e09c6d8f3e97c96d.jpg",
+    "mal_id": 0,
+    "anilist_id": 0,
+    "kitsu_id": 0,
+    "malScore": 0,
+    "status": "watching",
+    "rating": 8,
+    "epWatched": 1,
+    "epTotal": 12,
+    "genres": [],
+    "notes": "Testing",
+    "visible": true
+  }
+]
