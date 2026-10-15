@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anime Tracker</title>
+  <link id="favicon" rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <meta name="description" content="My personal anime tracker — watching, finished, plan to watch. Auto-fetch covers from MyAnimeList via Jikan." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { display: ['Outfit','system-ui','sans-serif'], body: ['Inter','system-ui','sans-serif'] },
+          colors: { ink: '#0b1020', panel: '#121832', neon: '#a78bfa', neon2: '#22d3ee' }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="font-body text-slate-100 min-h-screen">
+
+  <!-- LIVE BACKGROUND: collage + gradient + particles -->
+  <div id="bg-root" aria-hidden="true">
+    <div id="bg-collage"></div>
+    <div id="bg-gradient"></div>
+    <canvas id="bg-particles"></canvas>
+  </div>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-[#0b1020]/80 border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+      <a href="#" class="font-display font-800 text-lg tracking-tight flex items-center gap-2">
+        <span class="logo-orb"><img id="logoFace" src="logo-faces/naruto.jpg" alt="Anime face" /></span>
+        <span>Anime<span class="text-violet-300">Tracker</span></span>
+      </a>
+
+      <div class="flex-1 min-w-[180px] relative">
+        <input id="localSearch" type="text" placeholder="Filter my list… (e.g. Naruto)"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-2 text-sm outline-none focus:border-violet-400 placeholder:text-slate-500" />
+        <span class="absolute left-3 top-2.5 opacity-60">🔍</span>
+      </div>
+
+      <div class="flex items-center gap-2 text-sm">
+        <div class="view-toggle bg-white/5 border border-white/10 rounded-xl p-1 flex">
+          <button id="viewCards" class="view-btn active">🃏 Cards</button>
+          <button id="viewBubbles" class="view-btn">🫧 Bubbles</button>
+        </div>
+        <button id="bgToggle" title="Toggle live background" class="icon-btn">🌌</button>
+        <button id="addBtn" class="add-top" data-admin hidden>+ Add</button>
+        <button id="syncBtn" class="icon-btn" data-admin hidden title="Download updated anime-data.json — replace the file in GitHub, push, Vercel redeploys">⬇ Sync</button>
+        <button id="logoutBtn" class="icon-btn" data-admin hidden title="Log out of admin">🔒</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-32 relative z-10">
+    <!-- HERO -->
+    <section class="pt-10 pb-6 text-center">
+      <p class="eyebrow">MY ANIME UNIVERSE • LIVE COLLAGE • AUTO-ART</p>
+      <h1 class="font-display font-extrabold text-4xl sm:text-5xl leading-tight">What I'm <span class="grad-text">Watching</span></h1>
+      <p class="text-slate-300/90 mt-3 max-w-xl mx-auto text-sm sm:text-base">My personal anime collection.</p>
+
+      <!-- STATS -->
+      <div id="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 max-w-2xl mx-auto">
+        <div class="stat"><span id="stWatching" class="stat-n text-emerald-300">0</span><span class="stat-l">Watching</span></div>
+        <div class="stat"><span id="stFinished" class="stat-n text-sky-300">0</span><span class="stat-l">Finished</span></div>
+        <div class="stat"><span id="stPlan" class="stat-n text-amber-300">0</span><span class="stat-l">Plan to Watch</span></div>
+        <div class="stat"><span id="stAvg" class="stat-n text-violet-300">–</span><span class="stat-l">Avg rating</span></div>
+      </div>
+
+      <!-- QUICK ADD (admin only) -->
+      <div id="quickAdd" data-admin hidden class="mt-5 flex items-center justify-center gap-2 flex-wrap text-sm">
+        <span class="text-slate-400 text-xs uppercase tracking-widest">Quick-add:</span>
+        <button class="chip" data-quick="Naruto">Naruto</button>
+        <button class="chip" data-quick="One Piece">One Piece</button>
+        <button class="chip" data-quick="Jujutsu Kaisen">Jujutsu Kaisen</button>
+        <button class="chip" data-quick="Demon Slayer">Demon Slayer</button>
+        <button class="chip" data-quick="Frieren">Frieren</button>
+      </div>
+    </section>
+
+    <!-- FILTERS -->
+    <section class="flex items-center gap-2 flex-wrap justify-center mb-6">
+      <button class="pill active" data-filter="all">All</button>
+      <button class="pill" data-filter="watching">🟢 Watching</button>
+      <button class="pill" data-filter="finished">🔵 Finished</button>
+      <button class="pill" data-filter="plan">🟡 Plan to Watch</button>
+      <select id="sortSel" class="ml-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none">
+        <option value="recent">Sort: Recently added</option>
+        <option value="rating">Sort: My rating</option>
+        <option value="title">Sort: A–Z</option>
+        <option value="score">Sort: MAL score</option>
+      </select>
+    </section>
+
+    <!-- GRID -->
+    <section id="animeGrid" class="cards-grid"></section>
+
+    <div id="emptyState" class="hidden text-center py-16">
+      <div class="text-6xl mb-4">🍥</div>
+      <h2 class="font-display text-2xl font-bold">No anime here yet</h2>
+      <p class="text-slate-400 mt-2 text-sm" data-admin hidden>Hit <b>+ Add</b> and type e.g. “Solo Leveling” — the poster appears like magic.</p>
+      <button id="emptyAdd" data-admin hidden class="add-top mt-5 !px-6 !py-3">+ Add your first anime</button>
+    </div>
+  </main>
+
+  <!-- FAB (admin only) -->
+  <button id="fab" data-admin hidden title="Add anime">+</button>
+
+  <!-- ADD / EDIT MODAL -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="modalTitle" class="font-display text-2xl font-bold">Add anime</h2>
+          <p class="text-slate-400 text-sm">Type a name — results + art load automatically.</p>
+        </div>
+        <button id="modalClose" class="icon-btn">✕</button>
+      </div>
+
+      <label class="fld-label">Anime name</label>
+      <div class="relative">
+        <input id="animeSearch" type="text" autocomplete="off" placeholder="e.g. Attack on Titan, Chainsaw Man…"
+          class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 outline-none focus:border-violet-400" />
+        <div id="searchStatus" class="text-xs text-slate-400 mt-1 h-4"></div>
+        <div id="searchResults" class="results"></div>
+      </div>
+
+      <div id="preview" class="hidden mt-3 flex gap-3 items-start bg-white/5 border border-white/10 rounded-2xl p-3">
+        <img id="pvImg" src="" alt="cover" referrerpolicy="no-referrer" class="w-20 h-28 object-cover rounded-xl border border-white/10" />
+        <div class="min-w-0">
+          <p id="pvTitle" class="font-bold truncate"></p>
+          <p id="pvMeta" class="text-xs text-slate-400"></p>
+          <div id="pvGenres" class="flex gap-1 flex-wrap mt-2"></div>
+        </div>
+      </div>
+
+      <label class="fld-label mt-3">Cover photo (auto-filled — or paste your own image link)</label>
+      <div class="flex gap-2">
+        <input id="fCover" type="url" placeholder="https://…/poster.jpg" class="fld" />
+        <button id="googleBtn" type="button" title="Find poster on Google Images" class="mini-btn !flex-none px-3 py-2">🔎 Google</button>
+        <label class="mini-btn !flex-none px-3 py-2 cursor-pointer text-center">📁<input id="fCoverFile" type="file" accept="image/*" class="hidden" /></label>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-1">Tap 🔎 Google to find a poster, right-click → Copy image address, paste it here. Or upload from your PC.</p>
+
+      <div class="grid sm:grid-cols-2 gap-3 mt-4">
+        <div>
+          <label class="fld-label">Status</label>
+          <select id="fStatus" class="fld">
+            <option value="watching">🟢 Watching</option>
+            <option value="finished">🔵 Finished</option>
+            <option value="plan">🟡 Plan to Watch</option>
+          </select>
+        </div>
+        <div>
+          <label class="fld-label">My rating (0–10)</label>
+          <div class="flex items-center gap-2">
+            <input id="fRating" type="range" min="0" max="10" step="1" value="8" class="flex-1 accent-violet-400" />
+            <span id="ratingOut" class="font-display font-bold text-violet-200 w-8 text-center">8</span>
+          </div>
+          <div id="stars" class="text-amber-300 text-sm tracking-widest mt-1">★★★★☆</div>
+        </div>
+        <div>
+          <label class="fld-label">Episodes watched</label>
+          <div class="flex gap-2">
+            <input id="fEpWatched" type="number" min="0" value="1" class="fld" />
+            <input id="fEpTotal" type="number" min="0" value="12" title="Total episodes" class="fld" />
+          </div>
+        </div>
+        <div>
+          <label class="fld-label">Genres (auto, editable)</label>
+          <input id="fGenres" type="text" placeholder="Action, Adventure" class="fld" />
+        </div>
+      </div>
+
+      <label class="fld-label mt-3">Notes</label>
+      <textarea id="fNotes" rows="2" placeholder="Why I love it, where I left off…" class="fld resize-none"></textarea>
+
+      <div class="flex gap-2 mt-5">
+        <button id="saveBtn" class="flex-1 add-top !py-3 justify-center">Save to my list ✨</button>
+        <button id="deleteBtn" class="hidden px-4 py-3 rounded-xl bg-red-500/15 border border-red-400/30 text-red-200 text-sm">Delete</button>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-3">Art & info: Jikan (MyAnimeList) + Kitsu fallback • free, no key • if search is offline, paste a cover link or upload from PC.</p>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN (hidden — only opens via #/myadmin) -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-card !max-w-sm">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-2xl font-bold">👑 Admin login</h2>
+          <p class="text-slate-400 text-sm">Restricted area. Visitors never see this.</p>
+        </div>
+        <button id="loginClose" class="icon-btn">✕</button>
+      </div>
+      <label class="fld-label">Username</label>
+      <input id="loginUser" type="text" autocomplete="username" placeholder="username" class="fld" />
+      <label class="fld-label mt-3">Password</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" class="fld" />
+      <p id="loginErr" class="hidden text-sm text-red-300 mt-2">Wrong username or password.</p>
+      <button id="loginBtn" class="add-top w-full !py-3 justify-center mt-5">Unlock admin 🔓</button>
+    </div>
+  </div>
+
+  <!-- SLIDE-IN DETAIL DRAWER (what visitors see when they tap a card) -->
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="detailDrawer" class="drawer" aria-label="Anime details">
+    <div class="drawer-inner">
+      <div class="flex items-center justify-between gap-3">
+        <div id="dBadge"></div>
+        <button id="detailClose" class="icon-btn" title="Close">✕</button>
+      </div>
+      <div class="drawer-cols">
+        <div class="drawer-media">
+          <img id="dImg" src="" alt="cover" referrerpolicy="no-referrer" class="w-full h-64 object-cover rounded-2xl border border-white/10 mt-3" style="object-position:top center" />
+        </div>
+        <div class="drawer-body">
+          <h2 id="dTitle" class="font-display text-2xl font-bold mt-3 leading-tight"></h2>
+          <div class="dlist">
+            <div class="drow"><span>My rating</span><span><span id="dStars" class="text-amber-300"></span> <b id="dRating"></b></span></div>
+            <div class="drow" id="dScoreRow"><span>MAL score</span><b id="dScore"></b></div>
+            <div class="drow"><span>Episodes</span><span id="dEp" class="text-slate-300"></span></div>
+            <div class="progress mt-1"><div id="dBar" style="width:0%"></div></div>
+            <div class="drow"><span>Genres</span><div id="dGenres" class="flex gap-1 flex-wrap justify-end"></div></div>
+            <div class="drow drow-stack"><span>Notes</span><p id="dNotes" class="italic text-slate-300"></p></div>
+          </div>
+          <button id="drawerEdit" data-admin hidden class="add-top w-full !py-3 justify-center mt-5">Edit ✏️</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="admin-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
