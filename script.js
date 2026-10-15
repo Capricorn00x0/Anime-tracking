@@ -596,6 +596,12 @@ function init() {
   $('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
   $('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
   $('logoutBtn').addEventListener('click', logout);
+  $('resetBtn').addEventListener('click', () => {
+    if (!isAdmin) return;
+    if (!confirm('Clear this browser\'s local tiles and reload from anime-data.json? Drafts only on this PC will be lost.')) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    location.reload();
+  });
   $('syncBtn').addEventListener('click', () => {
     if (!isAdmin) return;
     const pub = list.filter(isVisible);
