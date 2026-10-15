@@ -93,6 +93,7 @@ body.bg-off #bg-gradient { background: linear-gradient(180deg,#141a36,#0b1020); 
 .b-watching { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
 .b-finished { background:rgba(56,189,248,.18); color:#7dd3fc; border:1px solid rgba(56,189,248,.4); }
 .b-plan { background:rgba(251,191,36,.16); color:#fcd34d; border:1px solid rgba(251,191,36,.4); }
+.b-draft { background:rgba(248,113,113,.16); color:#fca5a5; border:1px solid rgba(248,113,113,.45); }
 .gchip { font-size:.68rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:.15rem .55rem; color:#cbd5e1; }
 .progress { height:7px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden; }
 .progress > div { height:100%; background:linear-gradient(90deg,#a78bfa,#22d3ee); border-radius:999px; }

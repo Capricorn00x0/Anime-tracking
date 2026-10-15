@@ -35,11 +35,13 @@ function toast(msg) {
 // ---------- DATA ----------
 // Public visitors read the shared anime-data.json (your published list).
 // Admin works on the browser copy (localStorage), then Syncs it to the file.
+function isVisible(a) { return !a || a.visible !== false; }
+
 function seed() {
   list = [
-    { id: 1, mal_id: 20, title: 'Naruto', image: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'finished', rating: 9, epWatched: 220, epTotal: 220, genres: ['Action','Adventure'], malScore: 8.0, notes: 'The classic that started it all 🍜', dateAdded: Date.now() - 86400000 * 9 },
-    { id: 2, mal_id: 38000, title: 'Demon Slayer', image: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'watching', rating: 9, epWatched: 32, epTotal: 55, genres: ['Action','Fantasy'], malScore: 8.6, notes: 'Animation is unreal 🔥', dateAdded: Date.now() - 86400000 * 4 },
-    { id: 3, mal_id: 52991, title: 'Frieren: Beyond Journey\'s End', image: 'https://cdn.myanimelist.net/images/anime/2226/122931.jpg', status: 'plan', rating: 10, epWatched: 0, epTotal: 28, genres: ['Adventure','Fantasy'], malScore: 8.9, notes: 'Everyone says cry at ep 1 😭', dateAdded: Date.now() - 86400000 },
+    { id: 1, mal_id: 20, title: 'Naruto', visible: true, image: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'finished', rating: 9, epWatched: 220, epTotal: 220, genres: ['Action','Adventure'], malScore: 8.0, notes: 'The classic that started it all 🍜', dateAdded: Date.now() - 86400000 * 9 },
+    { id: 2, mal_id: 38000, title: 'Demon Slayer', visible: true, image: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'watching', rating: 9, epWatched: 32, epTotal: 55, genres: ['Action','Fantasy'], malScore: 8.6, notes: 'Animation is unreal 🔥', dateAdded: Date.now() - 86400000 * 4 },
+    { id: 3, mal_id: 52991, title: 'Frieren: Beyond Journey\'s End', visible: true, image: 'https://cdn.myanimelist.net/images/anime/2226/122931.jpg', status: 'plan', rating: 10, epWatched: 0, epTotal: 28, genres: ['Adventure','Fantasy'], malScore: 8.9, notes: 'Everyone says cry at ep 1 😭', dateAdded: Date.now() - 86400000 },
   ];
   save();
 }
@@ -47,6 +49,8 @@ function heal() {
   // swap old external placeholder URLs (need internet) to the offline one
   let fixed = false;
   list.forEach(a => { if (a.image && a.image.indexOf('placehold.co') !== -1) { a.image = PLACEHOLDER; fixed = true; } });
+  // migrate old entries without a flag: missing = live (stays visible)
+  list.forEach(a => { if (a.visible === undefined) { a.visible = true; fixed = true; } });
   if (fixed) save();
 }
 async function loadData() {
@@ -67,6 +71,8 @@ async function loadData() {
     else seed();
   }
   heal();
+  // Visitors never see drafts, even if an old file still contains them.
+  if (!isAdmin) list = list.filter(isVisible);
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {} }
 
@@ -277,6 +283,7 @@ let drawerId = null;
 function openDetail(id) {
   const a = list.find(x => x.id === id);
   if (!a) return;
+  if (!isAdmin && !isVisible(a)) return;
   drawerId = id;
   $('dTitle').textContent = a.title;
   $('dImg').src = a.image || PLACEHOLDER;
@@ -314,6 +321,7 @@ function stars(r) { r = Math.round(r / 2); return '★'.repeat(r) + '☆'.repeat
 
 function filtered() {
   let out = list.slice();
+  if (!isAdmin) out = out.filter(isVisible);
   if (filter !== 'all') out = out.filter(a => a.status === filter);
   if (localQuery) out = out.filter(a => (a.title + ' ' + (a.genres || []).join(' ')).toLowerCase().includes(localQuery));
   if (sortBy === 'rating') out.sort((a, b) => b.rating - a.rating);
@@ -334,20 +342,20 @@ function render() {
       const pct = a.epTotal ? Math.min(100, Math.round((a.epWatched / a.epTotal) * 100)) : 0;
       return '<article class="acard" data-id="' + a.id + '">' +
         '<div class="relative"><img class="cover" loading="lazy" referrerpolicy="no-referrer" src="' + esc(a.image) + '" onerror="imgFallback(this)" alt="' + esc(a.title) + '" />' +
-        '<div class="absolute top-2 left-2">' + badge(a.status) + '</div>' +
+        '<div class="absolute top-2 left-2">' + badge(a.status) + (isAdmin && !isVisible(a) ? ' <span class="badge b-draft">🚫 Draft</span>' : '') + '</div>' +
         (SHOW_SCORES && a.malScore ? '<div class="absolute top-2 right-2 text-[11px] bg-black/70 rounded-full px-2 py-1">⭐ ' + a.malScore + '</div>' : '') + '</div>' +
         '<div class="pad"><h3 class="font-display font-bold leading-snug">' + esc(a.title) + '</h3>' +
         '<p class="text-xs text-slate-400 mt-1">My rating <span class="text-amber-300">' + stars(a.rating) + '</span> <b class="text-slate-200">' + a.rating + '/10</b> • ' + a.epWatched + '/' + a.epTotal + ' ep</p>' +
         '<div class="progress mt-2"><div style="width:' + pct + '%"></div></div>' +
         '<div class="flex gap-1 flex-wrap mt-2">' + (a.genres || []).slice(0, 3).map(g => '<span class="gchip">' + esc(g) + '</span>').join('') + '</div>' +
         (a.notes ? '<p class="text-xs text-slate-400 mt-2 line-clamp-2">“' + esc(a.notes) + '”</p>' : '') +
-        (isAdmin ? '<div class="card-actions"><button class="mini-btn" data-act="plus">+1 ep</button><button class="mini-btn" data-act="edit">Edit</button><button class="mini-btn" data-act="del">🗑</button></div>' : '') +
+        (isAdmin ? '<div class="card-actions"><button class="mini-btn" data-act="plus">+1 ep</button><button class="mini-btn" data-act="edit">Edit</button><button class="mini-btn" data-act="vis">' + (isVisible(a) ? '👁 Live' : '🚫 Hidden') + '</button><button class="mini-btn" data-act="del">🗑</button></div>' : '') +
         '</div></article>';
     }).join('');
   } else {
     grid.innerHTML = items.map(a =>
       '<div class="abubble" data-id="' + a.id + '"><div class="orb"><img loading="lazy" referrerpolicy="no-referrer" src="' + esc(a.image) + '" onerror="imgFallback(this)" alt="' + esc(a.title) + '" /></div>' +
-      '<p>' + esc(a.title) + '</p><div class="sub">' + badge(a.status) + ' • ' + a.rating + '/10</div></div>'
+      '<p>' + esc(a.title) + (isAdmin && !isVisible(a) ? ' 🚫' : '') + '</p><div class="sub">' + badge(a.status) + ' • ' + a.rating + '/10</div></div>'
     ).join('');
   }
 
@@ -368,6 +376,7 @@ function render() {
       const act = btn && btn.dataset.act;
       if (act === 'plus') { const a = list.find(x => x.id === id); if (a) { a.epWatched = Math.min(a.epTotal || 999, (+a.epWatched || 0) + 1); if (a.epWatched >= a.epTotal && a.epTotal) a.status = 'finished'; save(); render(); } }
       if (act === 'edit') openEdit(id);
+      if (act === 'vis') { const a = list.find(x => x.id === id); if (a) { a.visible = !isVisible(a); save(); render(); toast(a.visible ? 'Live on next Sync 🌐' : 'Hidden draft 🚫'); } }
       if (act === 'del') { if (confirm('Remove this anime?')) { list = list.filter(x => x.id !== id); save(); render(); toast('Removed 🗑'); } }
       ev.stopPropagation();
     });
@@ -392,6 +401,7 @@ function openAdd(prefill) {
   $('fRating').value = 8; $('ratingOut').textContent = '8'; paintStars();
   $('fEpWatched').value = 1; $('fEpTotal').value = 12;
   $('fGenres').value = ''; $('fNotes').value = ''; $('fCover').value = '';
+  $('fVisible').checked = false; // new tiles start as private drafts
   $('modal').classList.remove('hidden');
   setTimeout(() => $('animeSearch').focus(), 50);
   if (prefill) { $('animeSearch').value = prefill; doQuickPrefill(prefill); }
@@ -420,6 +430,7 @@ function openEdit(id) {
   $('fGenres').value = (a.genres || []).join(', ');
   $('fNotes').value = a.notes || '';
   $('fCover').value = (a.image && a.image.indexOf('data:') !== 0) ? a.image : '';
+  $('fVisible').checked = isVisible(a);
   $('modal').classList.remove('hidden');
 }
 function closeModal() { $('modal').classList.add('hidden'); editingId = null; picked = null; }
@@ -444,6 +455,7 @@ function saveModal() {
     epTotal: Math.max(0, +$('fEpTotal').value || 0),
     genres: $('fGenres').value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 4),
     notes: $('fNotes').value.trim(),
+    visible: $('fVisible').checked,
   };
   if (editingId != null) {
     const a = list.find(x => x.id === editingId);
@@ -584,10 +596,11 @@ function init() {
   $('logoutBtn').addEventListener('click', logout);
   $('syncBtn').addEventListener('click', () => {
     if (!isAdmin) return;
-    const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+    const pub = list.filter(isVisible);
+    const blob = new Blob([JSON.stringify(pub, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'anime-data.json'; a.click();
-    toast('Downloaded anime-data.json — replace the file in GitHub & push to update the live site ⬇');
+    toast('Downloaded ' + pub.length + ' live / ' + (list.length - pub.length) + ' drafts hidden ⬇');
   });
 
   // slide-in detail drawer
