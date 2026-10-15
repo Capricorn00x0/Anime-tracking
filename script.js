@@ -343,19 +343,21 @@ function render() {
       return '<article class="acard" data-id="' + a.id + '">' +
         '<div class="relative"><img class="cover" loading="lazy" referrerpolicy="no-referrer" src="' + esc(a.image) + '" onerror="imgFallback(this)" alt="' + esc(a.title) + '" />' +
         '<div class="absolute top-2 left-2">' + badge(a.status) + (isAdmin && !isVisible(a) ? ' <span class="badge b-draft">🚫 Draft</span>' : '') + '</div>' +
-        (SHOW_SCORES && a.malScore ? '<div class="absolute top-2 right-2 text-[11px] bg-black/70 rounded-full px-2 py-1">⭐ ' + a.malScore + '</div>' : '') + '</div>' +
+        (isAdmin ? '<button class="vis-toggle ' + (isVisible(a) ? 'on' : 'off') + '" data-act="vis" title="' + (isVisible(a) ? 'Live — click to hide' : 'Hidden draft — click to publish') + '"><span class="knob"></span><span class="lbl">' + (isVisible(a) ? 'ON' : 'OFF') + '</span></button>' : '') +
+        (SHOW_SCORES && a.malScore ? '<div class="absolute ' + (isAdmin ? 'top-12' : 'top-2') + ' right-2 text-[11px] bg-black/70 rounded-full px-2 py-1">⭐ ' + a.malScore + '</div>' : '') + '</div>' +
         '<div class="pad"><h3 class="font-display font-bold leading-snug">' + esc(a.title) + '</h3>' +
         '<p class="text-xs text-slate-400 mt-1">My rating <span class="text-amber-300">' + stars(a.rating) + '</span> <b class="text-slate-200">' + a.rating + '/10</b> • ' + a.epWatched + '/' + a.epTotal + ' ep</p>' +
         '<div class="progress mt-2"><div style="width:' + pct + '%"></div></div>' +
         '<div class="flex gap-1 flex-wrap mt-2">' + (a.genres || []).slice(0, 3).map(g => '<span class="gchip">' + esc(g) + '</span>').join('') + '</div>' +
         (a.notes ? '<p class="text-xs text-slate-400 mt-2 line-clamp-2">“' + esc(a.notes) + '”</p>' : '') +
-        (isAdmin ? '<div class="card-actions"><button class="mini-btn" data-act="plus">+1 ep</button><button class="mini-btn" data-act="edit">Edit</button><button class="mini-btn" data-act="vis">' + (isVisible(a) ? '👁 Live' : '🚫 Hidden') + '</button><button class="mini-btn" data-act="del">🗑</button></div>' : '') +
+        (isAdmin ? '<div class="card-actions"><button class="mini-btn" data-act="plus">+1 ep</button><button class="mini-btn" data-act="edit">Edit</button><button class="mini-btn" data-act="del">🗑</button></div>' : '') +
         '</div></article>';
     }).join('');
   } else {
     grid.innerHTML = items.map(a =>
       '<div class="abubble" data-id="' + a.id + '"><div class="orb"><img loading="lazy" referrerpolicy="no-referrer" src="' + esc(a.image) + '" onerror="imgFallback(this)" alt="' + esc(a.title) + '" /></div>' +
-      '<p>' + esc(a.title) + (isAdmin && !isVisible(a) ? ' 🚫' : '') + '</p><div class="sub">' + badge(a.status) + ' • ' + a.rating + '/10</div></div>'
+      '<p>' + esc(a.title) + (isAdmin && !isVisible(a) ? ' 🚫' : '') + '</p><div class="sub">' + badge(a.status) + ' • ' + a.rating + '/10</div>' +
+      (isAdmin ? '<button class="mini-btn vis-bubble ' + (isVisible(a) ? 'on' : 'off') + '" data-act="vis">' + (isVisible(a) ? 'ON' : 'OFF') + '</button>' : '') + '</div>'
     ).join('');
   }
 

@@ -94,6 +94,28 @@ body.bg-off #bg-gradient { background: linear-gradient(180deg,#141a36,#0b1020); 
 .b-finished { background:rgba(56,189,248,.18); color:#7dd3fc; border:1px solid rgba(56,189,248,.4); }
 .b-plan { background:rgba(251,191,36,.16); color:#fcd34d; border:1px solid rgba(251,191,36,.4); }
 .b-draft { background:rgba(248,113,113,.16); color:#fca5a5; border:1px solid rgba(248,113,113,.45); }
+/* corner live toggle (admin only) */
+.vis-toggle {
+  position:absolute; top:.5rem; right:.5rem; z-index:5;
+  display:inline-flex; align-items:center; gap:.35rem;
+  border-radius:999px; padding:.28rem .6rem .28rem .35rem;
+  font-size:.68rem; font-weight:800; letter-spacing:.04em; cursor:pointer;
+  border:1px solid rgba(255,255,255,.2); color:white;
+  background:rgba(15,21,48,.85); backdrop-filter:blur(6px);
+}
+.vis-toggle .knob { width:22px; height:14px; border-radius:999px; position:relative; background:#475569; transition:background .15s; flex:none; }
+.vis-toggle .knob::after {
+  content:''; position:absolute; top:2px; left:2px; width:10px; height:10px; border-radius:50%;
+  background:white; transition:left .15s;
+}
+.vis-toggle.on { border-color:rgba(16,185,129,.6); }
+.vis-toggle.on .knob { background:#10b981; }
+.vis-toggle.on .knob::after { left:10px; }
+.vis-toggle.off { border-color:rgba(248,113,113,.6); }
+.vis-toggle.off .knob { background:#64748b; }
+.vis-bubble { max-width:90px; margin:.4rem auto 0; }
+.vis-bubble.on { border-color:rgba(16,185,129,.6); color:#6ee7b7; }
+.vis-bubble.off { border-color:rgba(248,113,113,.6); color:#fca5a5; }
 .gchip { font-size:.68rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:.15rem .55rem; color:#cbd5e1; }
 .progress { height:7px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden; }
 .progress > div { height:100%; background:linear-gradient(90deg,#a78bfa,#22d3ee); border-radius:999px; }
