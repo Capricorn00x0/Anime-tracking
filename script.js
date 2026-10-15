@@ -58,12 +58,12 @@ async function loadData() {
   let local = null;
   try { const raw = localStorage.getItem(KEY); if (raw) local = JSON.parse(raw); } catch (e) { local = null; }
   if (isAdmin) {
-    if (local && local.length) list = local;
-    else if (fileList && fileList.length) { list = fileList; save(); }
+    if (Array.isArray(local)) list = local;
+    else if (Array.isArray(fileList)) { list = fileList; save(); }
     else seed();
   } else {
-    if (fileList && fileList.length) list = fileList;
-    else if (local && local.length) list = local;
+    if (Array.isArray(fileList)) list = fileList;
+    else if (Array.isArray(local)) list = local;
     else seed();
   }
   heal();
